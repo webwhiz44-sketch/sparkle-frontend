@@ -20,25 +20,35 @@ class ApiClient {
 
   // --- Token refresh ---
 
+  // Returns true if refreshed, false ONLY if refresh token is explicitly
+  // rejected by the server (401). Throws on network errors so the caller
+  // can show an error instead of silently logging the user out.
   static Future<bool> _tryRefresh() async {
     final refreshToken = await AuthStorage.getRefreshToken();
     if (refreshToken == null) return false;
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/auth/refresh'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refreshToken': refreshToken}),
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/auth/refresh'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refreshToken': refreshToken}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body)['data'];
+      await AuthStorage.saveTokens(
+        data['accessToken'],
+        data['refreshToken'],
       );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body)['data'];
-        await AuthStorage.saveTokens(
-          data['accessToken'],
-          data['refreshToken'],
-        );
-        return true;
-      }
-    } catch (_) {}
-    return false;
+      return true;
+    }
+
+    // Only return false (trigger logout) when server explicitly rejects
+    // the refresh token (401/403). Any other status is unexpected — throw.
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      return false;
+    }
+
+    throw ApiException('Server error during token refresh (${response.statusCode})');
   }
 
   static void _forceLogout() async {
@@ -55,12 +65,22 @@ class ApiClient {
       Future<http.Response> Function() request) async {
     var response = await request();
     if (response.statusCode == 401) {
-      final refreshed = await _tryRefresh();
-      if (refreshed) {
-        response = await request();
-      } else {
-        _forceLogout();
-        throw ApiException('Session expired. Please sign in again.');
+      try {
+        final refreshed = await _tryRefresh();
+        if (refreshed) {
+          response = await request();
+        } else {
+          // Refresh token explicitly rejected — session truly expired
+          _forceLogout();
+          throw ApiException('Session expired. Please sign in again.');
+        }
+      } catch (e) {
+        if (e is ApiException && e.message.contains('Session expired')) {
+          rethrow;
+        }
+        // Network error or server error during refresh — don't logout,
+        // just surface the error so the user can retry
+        throw ApiException('Connection error. Please check your internet and try again.');
       }
     }
     return response;
