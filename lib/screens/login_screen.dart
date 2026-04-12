@@ -17,6 +17,152 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  void _showForgotPassword() {
+    final forgotEmailController = TextEditingController();
+    bool isSending = false;
+    bool sent = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+              24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDDDDDD),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                sent ? 'Check your inbox ✨' : 'Reset Password',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF1A1A1A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                sent
+                    ? 'If an account exists for ${forgotEmailController.text.trim()}, you\'ll receive a reset link shortly.'
+                    : 'Enter your email and we\'ll send you a reset link.',
+                style: const TextStyle(
+                    fontSize: 13, color: Color(0xFF888888), height: 1.5),
+              ),
+              if (!sent) ...[
+                const SizedBox(height: 20),
+                TextField(
+                  controller: forgotEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: 'your@email.com',
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: isSending
+                      ? null
+                      : () async {
+                          final email = forgotEmailController.text.trim();
+                          if (email.isEmpty) return;
+                          setSheetState(() => isSending = true);
+                          try {
+                            await ApiClient.post(
+                                '/api/auth/forgot-password', {'email': email},
+                                auth: false);
+                          } catch (_) {}
+                          setSheetState(() {
+                            isSending = false;
+                            sent = true;
+                          });
+                        },
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
+                      ),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: Center(
+                      child: isSending
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'SEND RESET LINK',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
+                      ),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'BACK TO SIGN IN',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -219,7 +365,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: _showForgotPassword,
                     child: const Text(
                       'FORGOT?',
                       style: TextStyle(

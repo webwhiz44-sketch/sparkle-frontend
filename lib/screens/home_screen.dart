@@ -323,7 +323,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () {},
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PostFeedScreen())),
             child: const Text(
               'View all →',
               style: TextStyle(

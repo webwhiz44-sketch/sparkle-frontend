@@ -1,6 +1,7 @@
 class AnonymousPostModel {
   final int id;
   final String content;
+  final String? imageUrl;
   final List<String> topicTags;
   final int likeCount;
   final int commentCount;
@@ -10,6 +11,7 @@ class AnonymousPostModel {
   AnonymousPostModel({
     required this.id,
     required this.content,
+    this.imageUrl,
     required this.topicTags,
     required this.likeCount,
     required this.commentCount,
@@ -20,7 +22,8 @@ class AnonymousPostModel {
   factory AnonymousPostModel.fromJson(Map<String, dynamic> json) {
     return AnonymousPostModel(
       id: json['id'],
-      content: json['content'],
+      content: json['content'] ?? '',
+      imageUrl: json['imageUrl'] as String?,
       topicTags: List<String>.from(json['topicTags'] ?? []),
       likeCount: json['likeCount'] ?? 0,
       commentCount: json['commentCount'] ?? 0,
@@ -53,6 +56,7 @@ class AnonymousPostModel {
     return AnonymousPostModel(
       id: id,
       content: content,
+      imageUrl: imageUrl,
       topicTags: topicTags,
       likeCount: likeCount ?? this.likeCount,
       commentCount: commentCount,

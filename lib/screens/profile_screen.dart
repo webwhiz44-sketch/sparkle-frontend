@@ -3,10 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
 import 'settings_screen.dart';
 import 'edit_profile_screen.dart';
+import 'post_feed_screen.dart';
+import 'communities_screen.dart';
 import '../models/user_model.dart';
 import '../models/post_model.dart';
+import '../models/community_model.dart';
 import '../services/user_service.dart';
 import '../services/post_service.dart';
+import '../services/community_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,13 +24,27 @@ class _ProfileScreenState extends State<ProfileScreen>
   late TabController _tabController;
   UserModel? _user;
   List<PostModel> _myPosts = [];
+  List<PostModel> _savedPosts = [];
+  List<CommunityModel> _myCommunities = [];
   bool _isLoading = true;
+  bool _savedLoading = false;
+  bool _clubsLoading = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _loadProfile();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index == 1 && _savedPosts.isEmpty && !_savedLoading) {
+      _loadSavedPosts();
+    } else if (_tabController.index == 2 && _myCommunities.isEmpty && !_clubsLoading) {
+      _loadMyCommunities();
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -47,6 +65,26 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
+  Future<void> _loadSavedPosts() async {
+    setState(() => _savedLoading = true);
+    try {
+      final posts = await PostService.getSavedPosts();
+      if (mounted) setState(() { _savedPosts = posts; _savedLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _savedLoading = false);
+    }
+  }
+
+  Future<void> _loadMyCommunities() async {
+    setState(() => _clubsLoading = true);
+    try {
+      final communities = await CommunityService.getMyCommunities();
+      if (mounted) setState(() { _myCommunities = communities; _clubsLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _clubsLoading = false);
+    }
+  }
+
   String _formatTime(String isoString) {
     if (isoString.isEmpty) return '';
     try {
@@ -61,6 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -267,7 +306,62 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               const SizedBox(width: 10),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    builder: (ctx) => SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 4,
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDDDDDD),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.share_outlined,
+                                  color: Color(0xFFBE1373)),
+                              title: const Text('Share Profile',
+                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Share link copied! ✨'),
+                                    backgroundColor: Color(0xFFBE1373),
+                                  ),
+                                );
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.settings_outlined,
+                                  color: Color(0xFF555555)),
+                              title: const Text('Settings',
+                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const SettingsScreen()),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -513,59 +607,210 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildSavedTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.bookmark_outline,
-              size: 56, color: Color(0xFFDDDDDD)),
-          const SizedBox(height: 12),
-          Text(
-            'Your saved stories\nwill appear here',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.dancingScript(
-              fontSize: 20,
-              color: const Color(0xFFAAAAAA),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
-              ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: const Text(
-              'Explore Stories',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
+    if (_savedLoading) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFFBE1373)));
+    }
+    if (_savedPosts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.bookmark_outline, size: 56, color: Color(0xFFDDDDDD)),
+            const SizedBox(height: 12),
+            Text(
+              'Your saved stories\nwill appear here',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.dancingScript(
+                fontSize: 20,
+                color: const Color(0xFFAAAAAA),
               ),
             ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const PostFeedScreen())),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Text(
+                  'Explore Stories',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _savedPosts.length,
+      itemBuilder: (context, index) {
+        final post = _savedPosts[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: const Color(0xFFEC407A),
+                      backgroundImage: post.author.profileImageUrl != null
+                          ? NetworkImage(post.author.profileImageUrl!)
+                          : null,
+                      child: post.author.profileImageUrl == null
+                          ? const Icon(Icons.person, color: Colors.white, size: 18)
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      post.author.displayName,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () async {
+                        await PostService.unsavePost(post.id);
+                        setState(() => _savedPosts.removeAt(index));
+                      },
+                      child: const Icon(Icons.bookmark, color: Color(0xFFBE1373), size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  post.content,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF333333), height: 1.5),
+                ),
+                if (post.topicTags.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    children: post.topicTags.map((t) => Text(
+                      '#$t',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFFBE1373), fontWeight: FontWeight.w600),
+                    )).toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildClubsTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.people_outline, size: 56, color: Color(0xFFDDDDDD)),
-          const SizedBox(height: 12),
-          Text(
-            'Your clubs will\nappear here',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.dancingScript(fontSize: 20, color: const Color(0xFFAAAAAA)),
+    if (_clubsLoading) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFFBE1373)));
+    }
+    if (_myCommunities.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.people_outline, size: 56, color: Color(0xFFDDDDDD)),
+            const SizedBox(height: 12),
+            Text(
+              'Your clubs will\nappear here',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.dancingScript(fontSize: 20, color: const Color(0xFFAAAAAA)),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const CommunitiesScreen())),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Text(
+                  'Browse Clubs',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _myCommunities.length,
+      itemBuilder: (context, index) {
+        final club = _myCommunities[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: club.coverImageUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(club.coverImageUrl!, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.people, color: Colors.white, size: 22)),
+                    )
+                  : const Icon(Icons.people, color: Colors.white, size: 22),
+            ),
+            title: Text(
+              club.name,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              '${club.memberCount} members',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF888888)),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC)),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CommunitiesScreen())),
+          ),
+        );
+      },
     );
   }
 }

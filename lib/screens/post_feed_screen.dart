@@ -36,6 +36,23 @@ class _PostFeedScreenState extends State<PostFeedScreen> {
     }
   }
 
+  Future<void> _toggleSave(int index) async {
+    final post = _posts[index];
+    final wasSaved = post.savedByMe;
+    setState(() {
+      _posts[index] = post.copyWith(savedByMe: !wasSaved);
+    });
+    try {
+      if (wasSaved) {
+        await PostService.unsavePost(post.id);
+      } else {
+        await PostService.savePost(post.id);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _posts[index] = post);
+    }
+  }
+
   Future<void> _toggleLike(int index) async {
     final post = _posts[index];
     final wasLiked = post.likedByMe;
@@ -284,8 +301,16 @@ class _PostFeedScreenState extends State<PostFeedScreen> {
                 const Icon(Icons.share_outlined,
                     color: Color(0xFF888888), size: 24),
                 const Spacer(),
-                const Icon(Icons.bookmark_outline,
-                    color: Color(0xFF888888), size: 24),
+                GestureDetector(
+                  onTap: () => _toggleSave(i),
+                  child: Icon(
+                    post.savedByMe ? Icons.bookmark : Icons.bookmark_outline,
+                    color: post.savedByMe
+                        ? const Color(0xFFBE1373)
+                        : const Color(0xFF888888),
+                    size: 24,
+                  ),
+                ),
               ],
             ),
           ),

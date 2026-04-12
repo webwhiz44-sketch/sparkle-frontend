@@ -12,11 +12,14 @@ class AnonymousPostService {
   static Future<AnonymousPostModel> createPost({
     required String content,
     List<String> topicTags = const [],
+    String? imageUrl,
   }) async {
-    final response = await ApiClient.post('/api/anonymous-posts', {
+    final body = <String, dynamic>{
       'content': content,
       'topicTags': topicTags,
-    });
+    };
+    if (imageUrl != null) body['imageUrl'] = imageUrl;
+    final response = await ApiClient.post('/api/anonymous-posts', body);
     return AnonymousPostModel.fromJson(ApiClient.parseResponse(response));
   }
 

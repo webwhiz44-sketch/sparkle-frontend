@@ -13,6 +13,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isBookmarked = false;
   int _likeCount = 1243;
   final _commentController = TextEditingController();
+  final _scrollController = ScrollController();
 
   final List<Map<String, dynamic>> _comments = [
     {
@@ -45,6 +46,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   @override
   void dispose() {
     _commentController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -56,6 +58,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         children: [
           Expanded(
             child: CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 _buildSliverAppBar(context),
                 SliverToBoxAdapter(
@@ -519,7 +522,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
           const SizedBox(height: 8),
           Center(
             child: TextButton(
-              onPressed: () {},
+              onPressed: () {
+                _scrollController.animateTo(
+                  _scrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOut,
+                );
+              },
               child: const Text(
                 'View all 84 responses →',
                 style: TextStyle(
@@ -655,7 +664,22 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () {},
+            onTap: () {
+              final text = _commentController.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                _comments.insert(0, {
+                  'name': 'You',
+                  'handle': '@me',
+                  'avatar': const Color(0xFFBE1373),
+                  'comment': text,
+                  'likes': 0,
+                  'time': 'Just now',
+                });
+              });
+              _commentController.clear();
+              FocusScope.of(context).unfocus();
+            },
             child: Container(
               width: 40,
               height: 40,

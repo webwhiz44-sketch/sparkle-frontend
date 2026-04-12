@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/anonymous_post_service.dart';
 import '../services/api_client.dart';
 
@@ -16,6 +18,7 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
   bool _isPosting = false;
   String _selectedPostType = 'text';
   final List<String> _selectedTags = [];
+  String? _selectedImagePath;
 
   final List<Map<String, String>> _tags = [
     {'label': '#GlowUp✨', 'value': 'glowup'},
@@ -137,12 +140,63 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
             value: 'text',
           ),
           const SizedBox(width: 12),
-          _buildPostTypeCard(
-            icon: Icons.add_photo_alternate_outlined,
-            label: 'Add\nPhoto',
-            value: 'photo',
-          ),
+          _buildPhotoTypeCard(),
         ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      _selectedImagePath = picked.path;
+      _selectedPostType = 'photo';
+    });
+  }
+
+  Widget _buildPhotoTypeCard() {
+    final isSelected = _selectedPostType == 'photo';
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        width: 100,
+        height: 72,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFBE1373) : const Color(0xFFDDDDDD),
+            width: isSelected ? 2 : 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _selectedImagePath != null
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.add_photo_alternate_outlined,
+              size: 24,
+              color: isSelected ? const Color(0xFFBE1373) : const Color(0xFF888888),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _selectedImagePath != null ? 'Change\nPhoto' : 'Add\nPhoto',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? const Color(0xFFBE1373) : const Color(0xFF555555),
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -214,6 +268,65 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Image preview (photo mode)
+          if (_selectedImagePath != null) ...[
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    File(_selectedImagePath!),
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () => setState(() {
+                      _selectedImagePath = null;
+                      _selectedPostType = 'text';
+                    }),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, color: Colors.white, size: 16),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.edit_outlined, color: Colors.white, size: 13),
+                          SizedBox(width: 4),
+                          Text('Change', style: TextStyle(color: Colors.white, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+          ],
+
           const Text(
             'THE NARRATIVE',
             style: TextStyle(
@@ -231,7 +344,7 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
             ),
             child: TextField(
               controller: _narrativeController,
-              maxLines: 8,
+              maxLines: _selectedImagePath != null ? 3 : 8,
               maxLength: 2500,
               onChanged: (_) => setState(() {}),
               style: GoogleFonts.dancingScript(
@@ -239,7 +352,9 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
                 color: const Color(0xFF333333),
               ),
               decoration: InputDecoration(
-                hintText: 'Once upon a time in a coffee\nshop downtown...',
+                hintText: _selectedImagePath != null
+                    ? 'Add a caption...'
+                    : 'Once upon a time in a coffee\nshop downtown...',
                 hintStyle: GoogleFonts.dancingScript(
                   fontSize: 17,
                   color: const Color(0xFFBBBBBB),
@@ -259,10 +374,7 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
               const SizedBox(width: 8),
               Text(
                 '${_narrativeController.text.length} / 2500',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFFAAAAAA),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFFAAAAAA)),
               ),
             ],
           ),
@@ -349,7 +461,54 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
 
   Widget _buildAddCustomChip() {
     return GestureDetector(
-      onTap: () {},
+      onTap: () async {
+        final controller = TextEditingController();
+        final result = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Add Custom Tag',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.none,
+              decoration: InputDecoration(
+                hintText: 'e.g. wellness, travel',
+                prefixText: '#',
+                filled: true,
+                fillColor: const Color(0xFFF5F5F5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel',
+                    style: TextStyle(color: Color(0xFF888888))),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+                child: const Text('Add',
+                    style: TextStyle(
+                        color: Color(0xFFBE1373),
+                        fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        );
+        if (result == null || result.isEmpty) return;
+        final value = result.replaceAll('#', '').trim();
+        if (value.isEmpty) return;
+        setState(() {
+          _tags.add({'label': '#$value', 'value': value});
+          if (!_selectedTags.contains(value)) _selectedTags.add(value);
+        });
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -426,18 +585,29 @@ class _SpillStoryScreenState extends State<SpillStoryScreen> {
 
   Future<void> _handleSpill() async {
     final content = _narrativeController.text.trim();
-    if (content.isEmpty) {
+    if (content.isEmpty && _selectedImagePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Write your story first ✨')),
+        const SnackBar(content: Text('Write your story or add a photo first ✨')),
       );
       return;
     }
     setState(() => _isPosting = true);
     try {
-      // Always posts anonymously via anonymous-posts endpoint
+      // Upload image first if one was selected
+      String? imageUrl;
+      if (_selectedImagePath != null) {
+        final uploadResponse = await ApiClient.uploadImage(
+          '/api/uploads/image',
+          _selectedImagePath!,
+        );
+        final uploadData = ApiClient.parseResponse(uploadResponse);
+        imageUrl = uploadData['imageUrl'] as String?;
+      }
+
       await AnonymousPostService.createPost(
         content: content,
         topicTags: _selectedTags,
+        imageUrl: imageUrl,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

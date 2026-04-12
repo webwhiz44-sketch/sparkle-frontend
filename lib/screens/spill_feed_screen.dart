@@ -280,14 +280,31 @@ class _SpillFeedScreenState extends State<SpillFeedScreen> {
               ],
             ),
           ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              post.content,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF333333), height: 1.6),
+          // Image (if present)
+          if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  post.imageUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 10),
+          ],
+          // Content
+          if (post.content.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                post.content,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF333333), height: 1.6),
+              ),
+            ),
           if (post.topicTags.isNotEmpty) ...[
             const SizedBox(height: 10),
             Padding(

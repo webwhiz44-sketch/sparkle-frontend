@@ -6,7 +6,9 @@ import '../services/post_service.dart';
 import '../services/api_client.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final int? communityId;
+
+  const CreatePostScreen({super.key, this.communityId});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -530,6 +532,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         content: caption.isEmpty ? '✨' : caption,
         imageUrl: imageUrl,
         topicTags: _selectedTags,
+        communityId: widget.communityId,
         poll: poll,
       );
       if (!context.mounted) return;

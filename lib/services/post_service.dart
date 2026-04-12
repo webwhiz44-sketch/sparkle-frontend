@@ -32,6 +32,21 @@ class PostService {
     await ApiClient.delete('/api/posts/$postId/like');
   }
 
+  static Future<void> savePost(int postId) async {
+    await ApiClient.post('/api/posts/$postId/save', {});
+  }
+
+  static Future<void> unsavePost(int postId) async {
+    await ApiClient.delete('/api/posts/$postId/save');
+  }
+
+  static Future<List<PostModel>> getSavedPosts({int page = 0, int size = 20}) async {
+    final response = await ApiClient.get('/api/posts/saved?page=$page&size=$size');
+    final data = ApiClient.parseResponse(response);
+    final List content = data['content'] ?? [];
+    return content.map((e) => PostModel.fromJson(e)).toList();
+  }
+
   static Future<String> uploadImage(String filePath) async {
     final response = await ApiClient.uploadImage('/api/uploads/image', filePath);
     final data = ApiClient.parseResponse(response);

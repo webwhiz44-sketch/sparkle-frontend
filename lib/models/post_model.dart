@@ -11,6 +11,7 @@ class PostModel {
   final int likeCount;
   final int commentCount;
   final bool likedByMe;
+  final bool savedByMe;
   final List<String> topicTags;
   final String createdAt;
   final PollModel? poll;
@@ -25,6 +26,7 @@ class PostModel {
     required this.likeCount,
     required this.commentCount,
     required this.likedByMe,
+    this.savedByMe = false,
     required this.topicTags,
     required this.createdAt,
     this.poll,
@@ -41,6 +43,7 @@ class PostModel {
       likeCount: json['likeCount'] ?? 0,
       commentCount: json['commentCount'] ?? 0,
       likedByMe: json['likedByMe'] ?? false,
+      savedByMe: json['savedByMe'] ?? false,
       topicTags: List<String>.from(json['topicTags'] ?? []),
       createdAt: _parseDateTime(json['createdAt']),
       poll: json['poll'] != null ? PollModel.fromJson(json['poll']) : null,
@@ -67,7 +70,7 @@ class PostModel {
     return value.toString();
   }
 
-  PostModel copyWith({int? likeCount, bool? likedByMe, PollModel? poll}) {
+  PostModel copyWith({int? likeCount, bool? likedByMe, bool? savedByMe, PollModel? poll}) {
     return PostModel(
       id: id,
       content: content,
@@ -78,6 +81,7 @@ class PostModel {
       likeCount: likeCount ?? this.likeCount,
       commentCount: commentCount,
       likedByMe: likedByMe ?? this.likedByMe,
+      savedByMe: savedByMe ?? this.savedByMe,
       topicTags: topicTags,
       createdAt: createdAt,
       poll: poll ?? this.poll,

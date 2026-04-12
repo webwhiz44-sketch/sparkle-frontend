@@ -16,4 +16,11 @@ class CommunityService {
   static Future<void> leaveCommunity(int id) async {
     await ApiClient.delete('/api/communities/$id/leave');
   }
+
+  static Future<List<CommunityModel>> getMyCommunities({int page = 0, int size = 20}) async {
+    final response = await ApiClient.get('/api/communities/my?page=$page&size=$size');
+    final data = ApiClient.parseResponse(response);
+    final List content = data['content'] ?? [];
+    return content.map((e) => CommunityModel.fromJson(e)).toList();
+  }
 }

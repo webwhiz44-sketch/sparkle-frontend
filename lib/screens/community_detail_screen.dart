@@ -4,6 +4,7 @@ import '../models/post_model.dart';
 import '../services/api_client.dart';
 import '../services/community_service.dart';
 import 'comments_screen.dart';
+import 'create_post_screen.dart';
 
 class CommunityDetailScreen extends StatefulWidget {
   final int? communityId;
@@ -667,7 +668,16 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen>
         ],
       ),
       child: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (_) => CreatePostScreen(communityId: widget.communityId),
+            ),
+          );
+          if (result == true) _loadPosts();
+        },
         backgroundColor: Colors.transparent,
         elevation: 0,
         label: const Text(
