@@ -6,7 +6,7 @@ import 'auth_storage.dart';
 import '../screens/login_screen.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'https://sparkle-backend-927496695401.asia-south1.run.app';
   static GlobalKey<NavigatorState>? navigatorKey;
 
   static Future<Map<String, String>> _headers({bool auth = true}) async {
