@@ -1,10 +1,17 @@
 import '../models/user_model.dart';
 import 'api_client.dart';
+import 'auth_storage.dart';
 
 class UserService {
   static Future<UserModel> getMe() async {
     final response = await ApiClient.get('/api/users/me');
     return UserModel.fromJson(ApiClient.parseResponse(response));
+  }
+
+  static Future<void> deleteAccount() async {
+    final response = await ApiClient.delete('/api/users/me');
+    ApiClient.parseResponse(response);
+    await AuthStorage.clear();
   }
 
   static Future<UserModel> updateProfile({

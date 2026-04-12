@@ -18,6 +18,7 @@ class AuthService {
     required String email,
     required String password,
     required String displayName,
+    required String faceVerificationToken,
     List<String> interests = const [],
   }) async {
     final response = await ApiClient.post(
@@ -27,6 +28,7 @@ class AuthService {
         'password': password,
         'displayName': displayName,
         'interests': interests,
+        'faceVerificationToken': faceVerificationToken,
       },
       auth: false,
     );
@@ -39,6 +41,19 @@ class AuthService {
     try {
       await ApiClient.post('/api/auth/logout', {});
     } catch (_) {}
+    await AuthStorage.clear();
+  }
+
+  static Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final response = await ApiClient.put('/api/auth/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+    ApiClient.parseResponse(response);
+    // Backend revokes all refresh tokens — clear local tokens to force re-login
     await AuthStorage.clear();
   }
 }

@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("org.jetbrains.kotlin.plugin.compose")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -11,6 +12,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -19,12 +21,13 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    buildFeatures {
+        compose = true
+    }
+
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.sparkle.sparkle_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -32,13 +35,40 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
+
+// Force all Amplify Android modules to the same version so smithy-kotlin
+// transitive dependencies resolve consistently and don't get downgraded.
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.amplifyframework" && requested.version != null) {
+            useVersion("2.22.0")
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // AWS Amplify Auth (Cognito Identity Pool credentials for FaceLivenessDetector)
+    implementation("com.amplifyframework:aws-auth-cognito:2.22.0")
+
+    // AWS Predictions — contains LivenessWebSocket and its smithy-kotlin deps
+    implementation("com.amplifyframework:aws-predictions:2.22.0")
+
+    // AWS Amplify UI Face Liveness (FaceLivenessDetector composable)
+    implementation("com.amplifyframework.ui:liveness:1.2.0")
+
+    // Compose (required by LivenessActivity)
+    implementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose:1.9.3")
 }

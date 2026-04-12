@@ -92,7 +92,7 @@ class _MainShellState extends State<MainShell> {
   Widget _buildBottomNav(BuildContext context) {
     final items = <Map<String, dynamic>?>[
       {'icon': Icons.auto_awesome_outlined, 'activeIcon': Icons.auto_awesome, 'label': 'Home'},
-      {'icon': Icons.people_outline, 'activeIcon': Icons.people, 'label': 'Clubs'},
+      {'icon': Icons.people_outline, 'activeIcon': Icons.people, 'label': 'Communities'},
       null, // FAB slot
       {'icon': Icons.water_drop_outlined, 'activeIcon': Icons.water_drop, 'label': 'Spill', 'chip': true},
       {'icon': Icons.person_outline, 'activeIcon': Icons.person, 'label': 'Me'},

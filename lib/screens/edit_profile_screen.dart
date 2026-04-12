@@ -82,11 +82,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFE53935)),
       );
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save. Try again.'),
-            backgroundColor: Color(0xFFE53935)),
+        SnackBar(content: Text(e.toString()),
+            backgroundColor: const Color(0xFFE53935)),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'login_screen.dart';
-import '../services/auth_service.dart';
-import '../services/auth_storage.dart';
+import 'face_verification_screen.dart';
 import '../services/api_client.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -20,83 +18,8 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
   bool _agreedToTerms = false;
-  bool _isLoading = false;
 
-  Future<void> _showSuccessDialog() async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_rounded, color: Colors.white, size: 38),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Welcome to the Sanctuary!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF1A1A1A),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Your account has been created ✨\nSign in to start sparkling.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.dancingScript(
-                  fontSize: 17,
-                  color: const Color(0xFF888888),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFBE1373), Color(0xFFEC407A)],
-                    ),
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'GO TO SIGN IN →',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _handleSignup() async {
+  void _handleSignup() {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -124,39 +47,16 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    try {
-      await AuthService.signup(
-        email: email,
-        password: password,
-        displayName: name,
-      );
-      if (!mounted) return;
-      // Clear tokens so user must log in explicitly
-      await AuthStorage.clear();
-      await _showSuccessDialog();
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (_) => false,
-      );
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFE53935)),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not connect to server. Check your connection.'),
-          backgroundColor: Color(0xFFE53935),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FaceVerificationScreen(
+          displayName: name,
+          email: email,
+          password: password,
         ),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+      ),
+    );
   }
 
   @override
@@ -426,12 +326,10 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 24),
 
               // Join button
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFBE1373)))
-                  : _buildGradientButton(
-                      label: 'JOIN THE SPARK ✦',
-                      onTap: _handleSignup,
-                    ),
+              _buildGradientButton(
+                label: 'JOIN THE SPARK ✦',
+                onTap: _handleSignup,
+              ),
               const SizedBox(height: 20),
 
               // Divider
