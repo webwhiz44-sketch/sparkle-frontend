@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
 import 'post_feed_screen.dart';
 import 'stories_feed_screen.dart';
-import 'spill_feed_screen.dart';
 import '../models/post_model.dart';
 import '../services/post_service.dart';
 import '../widgets/poll_widget.dart';
@@ -71,8 +70,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildRadiantStoriesHeader(),
             const SizedBox(height: 12),
-            _buildFeaturedStoryCard(),
-            const SizedBox(height: 12),
             _buildDailyPromptCard(),
             const SizedBox(height: 20),
             _buildPostsSectionHeader(context),
@@ -93,8 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: EdgeInsets.only(bottom: e.key < _previewPosts.length - 1 ? 12 : 0),
                 child: _buildApiPostCard(e.value),
               )),
-            const SizedBox(height: 12),
-            _buildSpillingTeaBanner(),
             const SizedBox(height: 100),
           ],
         ),
@@ -161,76 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Color(0xFFBE1373),
                 fontWeight: FontWeight.w600,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeaturedStoryCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Container(
-              height: 140,
-              width: double.infinity,
-              color: const Color(0xFFFFF9C4),
-              child: const Center(
-                child: Text('🎁', style: TextStyle(fontSize: 60)),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF0F5),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFFB6C1)),
-                  ),
-                  child: const Text(
-                    'FEATURED STORY',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFFBE1373),
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Manifesting Dreams...',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    fontStyle: FontStyle.italic,
-                    color: const Color(0xFF1A1A1A),
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -585,72 +510,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpillingTeaBanner() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0A12), Color(0xFF4A1A3A)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Spilling the Tea...',
-            style: GoogleFonts.dancingScript(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFFEC407A),
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            '"The biggest secret to high-\nmake your own..."',
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.white,
-              fontStyle: FontStyle.italic,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Text('❝',
-                  style: TextStyle(color: Color(0xFFEC407A), fontSize: 24)),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SpillFeedScreen())),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFBE1373),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Read More',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),
