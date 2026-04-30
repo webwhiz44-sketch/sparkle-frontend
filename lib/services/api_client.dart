@@ -62,26 +62,29 @@ class ApiClient {
   // --- HTTP helpers with auto-refresh ---
 
   static Future<http.Response> _withRefresh(
-      Future<http.Response> Function() request) async {
-    var response = await request();
-    if (response.statusCode == 401) {
-      try {
-        final refreshed = await _tryRefresh();
-        if (refreshed) {
-          response = await request();
-        } else {
-          // Refresh token explicitly rejected — session truly expired
-          _forceLogout();
-          throw ApiException('Session expired. Please sign in again.');
-        }
-      } catch (e) {
-        if (e is ApiException && e.message.contains('Session expired')) {
-          rethrow;
-        }
-        // Network error or server error during refresh — don't logout,
-        // just surface the error so the user can retry
-        throw ApiException('Connection error. Please check your internet and try again.');
+      Future<http.Response> Function() request, {bool auth = true}) async {
+    http.Response response;
+    try {
+      response = await request();
+    } catch (_) {
+      throw ApiException('Could not connect to server. Check your internet connection.');
+    }
+    // Only attempt token refresh for authenticated calls that get a 401.
+    // Unauthenticated calls (login, signup) must NOT trigger the refresh flow —
+    // a 401 from the server is a real credential error, not an expired token.
+    if (!auth || response.statusCode != 401) return response;
+    try {
+      final refreshed = await _tryRefresh();
+      if (refreshed) {
+        response = await request();
+      } else {
+        // Refresh token explicitly rejected — session truly expired
+        _forceLogout();
+        throw ApiException('Session expired. Please sign in again.');
       }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Could not connect to server. Check your internet connection.');
     }
     return response;
   }
@@ -99,7 +102,7 @@ class ApiClient {
           Uri.parse('$baseUrl$path'),
           headers: await _headers(auth: auth),
           body: jsonEncode(body),
-        ));
+        ), auth: auth);
   }
 
   static Future<http.Response> delete(String path) async {
