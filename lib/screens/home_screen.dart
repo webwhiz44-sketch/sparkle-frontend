@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'story_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'post_feed_screen.dart';
+import 'stories_feed_screen.dart';
+import 'spill_feed_screen.dart';
 import '../models/post_model.dart';
 import '../services/post_service.dart';
 import '../widgets/poll_widget.dart';
@@ -18,14 +19,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> _tags = [
-    '#GlowUp',
-    '#Career',
-    '#Relationships',
-    '#Wellness',
-    '#Style',
-  ];
-  int _selectedTagIndex = 0;
   List<PostModel> _previewPosts = [];
   bool _postsLoading = true;
 
@@ -76,7 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTagsRow(),
             _buildHeroBanner(),
             const SizedBox(height: 20),
             _buildRadiantStoriesHeader(),
@@ -145,49 +137,6 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ],
-    );
-  }
-
-  Widget _buildTagsRow() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: List.generate(_tags.length, (i) {
-            final isSelected = _selectedTagIndex == i;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedTagIndex = i),
-              child: Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFFBE1373)
-                      : const Color(0xFFFFF0F5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFFBE1373)
-                        : const Color(0xFFFFB6C1),
-                  ),
-                ),
-                child: Text(
-                  _tags[i],
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : const Color(0xFFBE1373),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-      ),
     );
   }
 
@@ -324,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           GestureDetector(
             onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PostFeedScreen())),
+                MaterialPageRoute(builder: (_) => const StoriesFeedScreen())),
             child: const Text(
               'View all →',
               style: TextStyle(
@@ -477,13 +426,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 14),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const StoryDetailScreen()),
-                    );
-                  },
+                  onTap: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const StoriesFeedScreen())),
                   child: Container(
                     width: double.infinity,
                     height: 46,
@@ -977,19 +921,22 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text('❝',
                   style: TextStyle(color: Color(0xFFEC407A), fontSize: 24)),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFBE1373),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Read More',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+              GestureDetector(
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SpillFeedScreen())),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBE1373),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Read More',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
